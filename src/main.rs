@@ -1,24 +1,35 @@
 use std::env;
 use std::fs;
+use std::fs::ReadDir;
 use std::path::PathBuf;
 use scraper::{Html, Selector};
 use regex::Regex;
 
 fn main() {
     let args = process_args();
-    println!("output location: {}", &args.output_file); //just to shut the compiler up
 
 
     let removal_patterns = read_removal_pattern_file(&args.removal_pattern_file);
 
-    let input_paths = fs::read_dir(&args.folder_path).unwrap();
+    let input_paths: ReadDir = fs::read_dir(&args.folder_path).unwrap();
 
     for path in input_paths {
+        //this is unreadable
        process_bookmark_file(&read_bookmark_file(&path.unwrap().path()), &removal_patterns);
     }
+
+    write_output("", &args.output_file);
 }
 
 fn process_args() -> Arguments {
+
+    /**
+    Would be nice if this took argument flags
+    ex: program -d Directory -o output_file.html -r regex.txt
+
+    loop through args and switch if flag. assign next element value to arg field
+    **/
+
     let args: Vec<String> = env::args().skip(1).collect();
 
     if args.len() < 2 {
@@ -39,13 +50,13 @@ fn process_args() -> Arguments {
     }
 }
 
+//this could probably return an array
 fn read_removal_pattern_file(path: &String) -> Vec<Regex> {
-    //I may actually want this to return a Vec of regex
+    //should this return an array?
     if path.is_empty(){
         return Vec::new();
     }
 
-    println!("We are goin to remove stuff");
     //read the file
     let pattern_strings: Vec<String> = match fs::read_to_string(&path) {
         Ok(v) => v.lines().map(String::from).collect(),
@@ -74,9 +85,9 @@ fn read_bookmark_file(path: &PathBuf) -> String {
 }
 
 fn process_bookmark_file(content: &String, removal_patterns: &Vec<Regex>) {
-
+    //todo: this needs a return type
     if removal_patterns.is_empty() != true {
-        println!("book marks will be removed")
+        println!("book marks will be removed") //todo: remove
     }
 
     let document = Html::parse_document(&content);
@@ -84,8 +95,16 @@ fn process_bookmark_file(content: &String, removal_patterns: &Vec<Regex>) {
 
     for element in document.select(&anchor_seloctor){
         println!("{}", element.value().attr("href").unwrap());
+        //todo: check if href matches any regex and remove parent <DT>
 
     }
+
+    //todo: Select and return the outr <DL>
+
+}
+
+fn write_output(file_content: &str, output_file: &String) -> () {
+//stub. signature will probably change
 }
 
 struct Arguments {
